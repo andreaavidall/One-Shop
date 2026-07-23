@@ -4,12 +4,26 @@
 @theme {
   --font-sans: 'DM Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  
+  --color-primary: #2563EB;
+  --color-primary-hover: #1D4ED8;
+  --color-primary-dark: #172554;
+  --color-bg-main: #FFFFFF;
+  --color-bg-alt: #F8FAFC;
+  --color-bg-blue-light: #EFF6FF;
+  --color-text-main: #0F172A;
+  --color-text-sub: #64748B;
+  --color-border-main: #E2E8F0;
+  --color-green-saving: #16A34A;
+  --color-amber-promo: #F59E0B;
+  --color-gold-rewards: #C9952E;
+  --color-red-error: #DC2626;
 }
 
 @layer base {
   body {
-    background-color: #fcfcfd;
-    color: #09090b;
+    background-color: #FFFFFF;
+    color: #0F172A;
     font-family: var(--font-sans);
     letter-spacing: -0.01em;
     -webkit-font-smoothing: antialiased;
@@ -17,8 +31,8 @@
   }
 
   .dark body {
-    background-color: #09090b;
-    color: #fafafa;
+    background-color: #0F172A;
+    color: #F8FAFC;
   }
 
   /* Custom thin scrollbars for dashboard elements */

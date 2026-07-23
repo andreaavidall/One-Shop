@@ -17,7 +17,7 @@ import { ThemeToggle } from './components/ThemeToggle';
 import { 
   LayoutGrid, Search, Sparkles, Box, Building2, ShoppingCart, 
   ShieldCheck, Info, X, Star, Bell, Heart, User, ChevronDown, 
-  Menu, LogOut, Package, Award, Settings, CheckCircle2, ChevronRight
+  Menu, LogOut, Package, Award, Settings, CheckCircle2, ChevronRight, MapPin
 } from 'lucide-react';
 
 const AppContent: React.FC = () => {
@@ -38,7 +38,7 @@ const AppContent: React.FC = () => {
   // Favorites list state (mock count)
   const [favoritesCount, setFavoritesCount] = useState(3);
   
-  const { cartItems, recommendations, cartTotals } = useCart();
+  const { cartItems, recommendations, cartTotals, addToCart } = useCart();
   const { user, setRole, setSupplierId } = useUser();
 
   const handleStartShopping = (query?: string) => {
@@ -110,50 +110,71 @@ const AppContent: React.FC = () => {
     : [];
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-[#09090b] text-zinc-900 dark:text-zinc-50 flex flex-col transition-colors duration-300">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50 flex flex-col transition-colors duration-300">
       
       {/* 1. DOUBLE-ROW FIXED HEADER */}
-      <header className="w-full bg-white dark:bg-[#0c0c0f] border-b border-zinc-200 dark:border-zinc-800 sticky top-0 z-40">
+      <header className="w-full bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 shadow-sm">
         
-        {/* ROW 1: Branding, Main Search, Actions & Accounts */}
-        <div className="max-w-[1440px] mx-auto px-6 py-3 flex justify-between items-center gap-4">
+        {/* ROW 1: Branding, Delivery Location, Main Search, Actions & Accounts */}
+        <div className="max-w-[1440px] mx-auto px-6 py-3 flex justify-between items-center gap-6">
           
           {/* Logo & Platform ID */}
           <div 
             onClick={() => setViewMode('landing')}
             className="flex items-center gap-2 cursor-pointer hover:opacity-90 shrink-0"
           >
-            <div className="w-7 h-7 rounded bg-blue-600 flex items-center justify-center text-white font-extrabold text-base shadow-sm">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-extrabold text-base shadow-sm">
               O
             </div>
-            <span className="text-base font-black tracking-tight text-zinc-950 dark:text-white">OneShop</span>
-            <span className="text-[8px] uppercase font-bold tracking-widest bg-zinc-100 dark:bg-zinc-850 text-zinc-500 dark:text-zinc-400 px-1 py-0.5 rounded border border-zinc-200 dark:border-zinc-800">
+            <span className="text-lg font-black tracking-tight text-slate-900 dark:text-white">OneShop</span>
+            <span className="text-[9px] uppercase font-bold tracking-widest bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded border border-blue-100 dark:border-blue-805">
               B2B
             </span>
           </div>
 
+          {/* Delivery Location Indicator */}
+          <div className="hidden lg:flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 shrink-0">
+            <MapPin size={15} className="text-blue-600" />
+            <div className="flex flex-col">
+              <span className="text-[10px] text-slate-400 font-medium leading-none font-sans">Entregar en</span>
+              <span className="font-semibold text-slate-700 dark:text-slate-200 leading-tight">Miraflores, Lima</span>
+            </div>
+          </div>
+
           {/* Large Central Search Bar */}
-          <form onSubmit={handleHeaderSearch} className="flex-1 max-w-xl hidden md:block">
-            <div className="relative flex items-center bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3 py-1.5 focus-within:ring-2 focus-within:ring-blue-500/30 transition-all">
-              <Search className="text-zinc-400 mr-2 shrink-0" size={16} />
+          <form onSubmit={handleHeaderSearch} className="flex-1 max-w-lg hidden md:block">
+            <div className="relative flex items-center bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
+              <Search className="text-slate-400 mr-2 shrink-0" size={16} />
               <input
                 id="headerSearch"
                 type="text"
                 placeholder="Busca un producto, marca, proveedor o describe lo que necesitas..."
-                className="w-full bg-transparent border-none text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none placeholder-zinc-400"
+                className="w-full bg-transparent border-none text-xs text-slate-950 dark:text-slate-50 focus:outline-none placeholder-slate-400"
               />
               <button 
                 type="submit" 
-                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1 rounded-lg text-[10px] transition-colors cursor-pointer"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1 rounded-lg text-xs transition-colors cursor-pointer"
               >
                 Buscar
               </button>
             </div>
           </form>
 
-          {/* Quick Actions (Notifications, Favorites, Cart, Account menu) */}
-          <div className="flex items-center gap-3 shrink-0">
+          {/* Quick Actions (Theme, Rewards, Favorites, Cart, Account menu) */}
+          <div className="flex items-center gap-4 shrink-0">
             <ThemeToggle />
+
+            {/* OneRewards Points Quick Link */}
+            {user.role === 'comprador' && (
+              <button
+                onClick={() => setActiveTab('recompensas')}
+                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-amber-205 bg-amber-50/50 hover:bg-amber-100/50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/20 dark:text-amber-400 text-xs font-semibold transition-colors cursor-pointer"
+                title="Centro de Recompensas OneRewards"
+              >
+                <Star size={14} className="fill-amber-500 text-amber-500" />
+                <span className="font-mono">{user.points} pts</span>
+              </button>
+            )}
 
             {/* Favorites Icon */}
             <button 
@@ -164,12 +185,12 @@ const AppContent: React.FC = () => {
                   triggerToast('Cargando lista de favoritos...');
                 }
               }}
-              className="relative p-2 hover:bg-zinc-100 dark:hover:bg-zinc-850 rounded-lg text-zinc-500 dark:text-zinc-400 cursor-pointer transition-colors"
+              className="relative p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-500 dark:text-slate-400 cursor-pointer transition-colors"
               title="Favoritos"
             >
-              <Heart size={16} />
+              <Heart size={18} className="hover:text-rose-500 transition-colors" />
               {favoritesCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-blue-600 text-white font-mono text-[8px] font-black px-1 py-0.2 rounded-full">
+                <span className="absolute -top-1 -right-1 bg-rose-500 text-white font-mono text-[9px] font-black px-1.5 py-0.2 rounded-full leading-none">
                   {favoritesCount}
                 </span>
               )}
@@ -179,27 +200,27 @@ const AppContent: React.FC = () => {
             <div className="relative">
               <button 
                 onClick={() => setShowNotificationMenu(!showNotificationMenu)}
-                className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-850 rounded-lg text-zinc-500 dark:text-zinc-400 cursor-pointer transition-colors"
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-500 dark:text-slate-400 cursor-pointer transition-colors"
                 title="Notificaciones"
               >
-                <Bell size={16} />
+                <Bell size={18} />
                 <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
               </button>
 
               {showNotificationMenu && (
-                <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-[#0c0c0f] border border-zinc-200 dark:border-zinc-850 rounded-xl shadow-xl p-3 z-50 text-xs text-zinc-650 dark:text-zinc-400 space-y-2">
-                  <div className="flex justify-between items-center pb-1.5 border-b border-zinc-100 dark:border-zinc-900">
-                    <span className="font-bold text-zinc-900 dark:text-white">Notificaciones</span>
-                    <button onClick={() => setShowNotificationMenu(false)} className="text-[10px] text-blue-500">Marcar leídas</button>
+                <div className="absolute right-0 mt-2.5 w-72 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl shadow-lg p-3.5 z-50 text-xs text-slate-600 dark:text-slate-350 space-y-2.5">
+                  <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800">
+                    <span className="font-bold text-slate-900 dark:text-white">Notificaciones</span>
+                    <button onClick={() => setShowNotificationMenu(false)} className="text-[10px] text-blue-600 hover:underline">Marcar leídas</button>
                   </div>
                   <div className="space-y-2">
-                    <div className="p-2 rounded hover:bg-zinc-50 dark:hover:bg-zinc-900">
-                      <p className="font-semibold text-zinc-900 dark:text-white">¡Ahorro Disponible!</p>
-                      <p className="text-[10px] text-zinc-400 mt-0.5">Optimiza tu carrito de compras y ahorra S/. 185 en Dental Express.</p>
+                    <div className="p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 border border-transparent hover:border-slate-100 dark:hover:border-slate-700 transition-colors">
+                      <p className="font-semibold text-slate-900 dark:text-white">¡Ahorro Disponible!</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Optimiza tu carrito de compras y ahorra S/. 185 en Dental Express.</p>
                     </div>
-                    <div className="p-2 rounded hover:bg-zinc-50 dark:hover:bg-zinc-900">
-                      <p className="font-semibold text-zinc-900 dark:text-white">Pedido Despachado</p>
-                      <p className="text-[10px] text-zinc-400 mt-0.5">OdontoImport envió los insumos del pedido ORD-9811.</p>
+                    <div className="p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 border border-transparent hover:border-slate-100 dark:hover:border-slate-700 transition-colors">
+                      <p className="font-semibold text-slate-900 dark:text-white">Pedido Despachado</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">OdontoImport envió los insumos del pedido ORD-9811.</p>
                     </div>
                   </div>
                 </div>
@@ -210,9 +231,9 @@ const AppContent: React.FC = () => {
             {user.role === 'comprador' && (
               <button 
                 onClick={() => setActiveTab('carrito')}
-                className="relative p-2 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-850 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-600 dark:text-zinc-300 cursor-pointer transition-all flex items-center gap-1.5"
+                className="relative p-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl text-slate-700 dark:text-slate-200 cursor-pointer transition-all flex items-center gap-1.5"
               >
-                <ShoppingCart size={16} />
+                <ShoppingCart size={18} />
                 {cartItems.length > 0 && (
                   <span className="bg-blue-600 text-white font-mono text-[9px] px-1.5 py-0.5 rounded-full font-bold">
                     {cartItems.length}
@@ -225,50 +246,56 @@ const AppContent: React.FC = () => {
             <div className="relative">
               <button 
                 onClick={() => setShowUserMenu(!showUserMenu)}
-                className="flex items-center gap-1.5 p-1 hover:bg-zinc-150/40 dark:hover:bg-zinc-800/40 rounded-lg cursor-pointer transition-colors"
+                className="flex items-center gap-1.5 p-1 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl cursor-pointer transition-colors"
               >
-                <div className="w-7 h-7 rounded-full bg-blue-600/10 text-blue-600 border border-blue-200/20 flex items-center justify-center font-bold text-xs uppercase">
+                <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-extrabold text-xs uppercase shadow-sm">
                   {user.role === 'comprador' ? 'CC' : user.role === 'proveedor' ? 'PV' : 'AD'}
                 </div>
-                <ChevronDown size={14} className="text-zinc-400" />
+                <div className="hidden lg:flex flex-col items-start pr-1 text-left">
+                  <span className="text-[10px] text-slate-400 leading-none">Mi Cuenta</span>
+                  <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 truncate max-w-[100px] leading-tight">
+                    {user.role === 'comprador' ? user.clinicName : user.role === 'proveedor' ? 'Proveedor' : 'Admin'}
+                  </span>
+                </div>
+                <ChevronDown size={14} className="text-slate-400" />
               </button>
 
               {showUserMenu && (
-                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-[#0c0c0f] border border-zinc-200 dark:border-zinc-850 rounded-xl shadow-xl p-3 z-50 text-xs">
-                  <div className="pb-2 border-b border-zinc-100 dark:border-zinc-900">
-                    <p className="font-bold text-zinc-900 dark:text-white">
-                      {user.role === 'comprador' ? user.clinicName : user.role === 'proveedor' ? 'DentMax Supply' : 'Admin Platform'}
+                <div className="absolute right-0 mt-2.5 w-60 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl shadow-lg p-3.5 z-50 text-xs text-slate-700 dark:text-slate-355 space-y-2">
+                  <div className="pb-2.5 border-b border-slate-100 dark:border-slate-800">
+                    <p className="font-bold text-slate-900 dark:text-white">
+                      {user.role === 'comprador' ? user.clinicName : user.role === 'proveedor' ? 'Dental Express Consola' : 'Administrador General'}
                     </p>
-                    <p className="text-[10px] text-zinc-400">{user.role === 'comprador' ? `RUC ${user.ruc}` : 'Acceso Autorizado'}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">{user.role === 'comprador' ? `RUC ${user.ruc}` : 'Acceso administrativo'}</p>
                   </div>
                   
                   {/* Selector de Roles */}
-                  <div className="py-2 space-y-1">
-                    <span className="text-[9px] uppercase font-bold text-zinc-450 block px-2">Cambiar Rol (MVP)</span>
+                  <div className="py-1 space-y-1">
+                    <span className="text-[9px] uppercase font-bold text-slate-450 block px-2 tracking-wider">Cambiar Rol (MVP)</span>
                     <button 
                       onClick={() => { setRole('comprador'); setActiveTab('resumen'); setShowUserMenu(false); }}
-                      className={`w-full text-left px-2 py-1.5 rounded hover:bg-zinc-50 dark:hover:bg-zinc-900 font-medium ${user.role === 'comprador' ? 'text-blue-500 font-bold' : 'text-zinc-600 dark:text-zinc-450'}`}
+                      className={`w-full text-left px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-850 font-medium transition-colors ${user.role === 'comprador' ? 'text-blue-600 font-bold bg-blue-50/55 dark:bg-blue-900/10' : 'text-slate-600 dark:text-slate-400'}`}
                     >
                       Comprador (Odontólogo/Clínica)
                     </button>
                     <button 
                       onClick={() => { setRole('proveedor'); setSupplierId('s1'); setActiveTab('proveedorPanel'); setShowUserMenu(false); }}
-                      className={`w-full text-left px-2 py-1.5 rounded hover:bg-zinc-50 dark:hover:bg-zinc-900 font-medium ${user.role === 'proveedor' ? 'text-blue-500 font-bold' : 'text-zinc-600 dark:text-zinc-450'}`}
+                      className={`w-full text-left px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-850 font-medium transition-colors ${user.role === 'proveedor' ? 'text-blue-600 font-bold bg-blue-50/55 dark:bg-blue-900/10' : 'text-slate-600 dark:text-slate-400'}`}
                     >
                       Proveedor (Dental Express)
                     </button>
                     <button 
                       onClick={() => { setRole('administrador'); setActiveTab('adminPanel'); setShowUserMenu(false); }}
-                      className={`w-full text-left px-2 py-1.5 rounded hover:bg-zinc-50 dark:hover:bg-zinc-900 font-medium ${user.role === 'administrador' ? 'text-blue-500 font-bold' : 'text-zinc-600 dark:text-zinc-450'}`}
+                      className={`w-full text-left px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-850 font-medium transition-colors ${user.role === 'administrador' ? 'text-blue-600 font-bold bg-blue-50/55 dark:bg-blue-900/10' : 'text-slate-650 dark:text-slate-400'}`}
                     >
                       Administrador (OneShop)
                     </button>
                   </div>
                   
-                  <div className="pt-1.5 border-t border-zinc-100 dark:border-zinc-900">
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
                     <button 
                       onClick={() => { setViewMode('landing'); setShowUserMenu(false); }}
-                      className="w-full text-left px-2 py-1.5 rounded hover:bg-rose-50 text-rose-500 font-semibold flex items-center gap-1.5"
+                      className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/20 text-rose-600 dark:text-rose-400 font-bold flex items-center gap-1.5 transition-colors"
                     >
                       <LogOut size={13} />
                       Cerrar Sesión
@@ -283,21 +310,21 @@ const AppContent: React.FC = () => {
 
         {/* ROW 2: Categories, Suppliers, Brands Drops & Navigation Links */}
         {user.role === 'comprador' && (
-          <div className="w-full border-t border-zinc-150 dark:border-zinc-900 bg-zinc-50/50 dark:bg-zinc-950/20 text-xs font-semibold text-zinc-600 dark:text-zinc-400">
-            <div className="max-w-[1440px] mx-auto px-6 py-2 flex items-center gap-6 overflow-x-auto justify-between md:justify-start">
+          <div className="w-full border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs font-semibold text-slate-600 dark:text-slate-400">
+            <div className="max-w-[1440px] mx-auto px-6 py-2.5 flex items-center gap-6 overflow-x-auto justify-between md:justify-start">
               
               {/* Dropdowns */}
-              <div className="flex gap-4">
+              <div className="flex gap-4 shrink-0">
                 {/* Comprar por Categoría */}
                 <div className="relative">
                   <button 
                     onClick={() => { setShowCategoryMenu(!showCategoryMenu); setShowSupplierMenu(false); setShowBrandMenu(false); }}
-                    className="hover:text-blue-600 flex items-center gap-1 cursor-pointer"
+                    className="hover:text-blue-600 flex items-center gap-1 cursor-pointer transition-colors"
                   >
                     Categorías <ChevronDown size={12} />
                   </button>
                   {showCategoryMenu && (
-                    <div className="absolute left-0 mt-2.5 w-48 bg-white dark:bg-[#0c0c0f] border border-zinc-200 dark:border-zinc-850 rounded-xl shadow-xl p-2 z-50 space-y-1">
+                    <div className="absolute left-0 mt-2.5 w-52 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg p-2 z-50 space-y-1">
                       {categoriesList.map(cat => (
                         <button
                           key={cat}
@@ -306,7 +333,7 @@ const AppContent: React.FC = () => {
                             setSearchInitialQuery(cat);
                             setShowCategoryMenu(false);
                           }}
-                          className="w-full text-left px-2.5 py-1.5 text-xs hover:bg-zinc-50 dark:hover:bg-zinc-900 rounded-md text-zinc-700 dark:text-zinc-300 transition-colors"
+                          className="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg text-slate-700 dark:text-slate-350 transition-colors"
                         >
                           {cat}
                         </button>
@@ -319,12 +346,12 @@ const AppContent: React.FC = () => {
                 <div className="relative">
                   <button 
                     onClick={() => { setShowSupplierMenu(!showSupplierMenu); setShowCategoryMenu(false); setShowBrandMenu(false); }}
-                    className="hover:text-blue-600 flex items-center gap-1 cursor-pointer"
+                    className="hover:text-blue-600 flex items-center gap-1 cursor-pointer transition-colors"
                   >
                     Proveedores <ChevronDown size={12} />
                   </button>
                   {showSupplierMenu && (
-                    <div className="absolute left-0 mt-2.5 w-52 bg-white dark:bg-[#0c0c0f] border border-zinc-200 dark:border-zinc-850 rounded-xl shadow-xl p-2 z-50 space-y-1">
+                    <div className="absolute left-0 mt-2.5 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg p-2 z-50 space-y-1">
                       {suppliers.map(sup => (
                         <button
                           key={sup.id}
@@ -333,7 +360,7 @@ const AppContent: React.FC = () => {
                             setSearchInitialQuery(sup.name);
                             setShowSupplierMenu(false);
                           }}
-                          className="w-full text-left px-2.5 py-1.5 text-xs hover:bg-zinc-50 dark:hover:bg-zinc-900 rounded-md text-zinc-700 dark:text-zinc-300 transition-colors"
+                          className="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg text-slate-700 dark:text-slate-350 transition-colors"
                         >
                           {sup.name}
                         </button>
@@ -346,12 +373,12 @@ const AppContent: React.FC = () => {
                 <div className="relative">
                   <button 
                     onClick={() => { setShowBrandMenu(!showBrandMenu); setShowCategoryMenu(false); setShowSupplierMenu(false); }}
-                    className="hover:text-blue-600 flex items-center gap-1 cursor-pointer"
+                    className="hover:text-blue-600 flex items-center gap-1 cursor-pointer transition-colors"
                   >
                     Marcas <ChevronDown size={12} />
                   </button>
                   {showBrandMenu && (
-                    <div className="absolute left-0 mt-2.5 w-44 bg-white dark:bg-[#0c0c0f] border border-zinc-200 dark:border-zinc-850 rounded-xl shadow-xl p-2 z-50 space-y-1 max-h-60 overflow-y-auto">
+                    <div className="absolute left-0 mt-2.5 w-48 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg p-2 z-50 space-y-1 max-h-60 overflow-y-auto">
                       {brandsList.map(brand => (
                         <button
                           key={brand}
@@ -360,7 +387,7 @@ const AppContent: React.FC = () => {
                             setSearchInitialQuery(brand);
                             setShowBrandMenu(false);
                           }}
-                          className="w-full text-left px-2.5 py-1.5 text-xs hover:bg-zinc-50 dark:hover:bg-zinc-900 rounded-md text-zinc-700 dark:text-zinc-300 transition-colors"
+                          className="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg text-slate-700 dark:text-slate-355 transition-colors"
                         >
                           {brand}
                         </button>
@@ -371,15 +398,51 @@ const AppContent: React.FC = () => {
               </div>
 
               {/* Navigation tabs shortcut */}
-              <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800 hidden md:block" />
+              <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 hidden md:block shrink-0" />
 
-              <div className="flex gap-4">
-                <button onClick={() => { setActiveTab('buscar'); setSearchInitialQuery(''); }} className={`hover:text-zinc-950 dark:hover:text-white cursor-pointer ${activeTab === 'buscar' ? 'text-blue-500 font-bold' : ''}`}>Ver productos</button>
-                <button onClick={() => { setActiveTab('buscar'); setSearchInitialQuery('Filtek'); }} className="hover:text-zinc-950 dark:hover:text-white cursor-pointer">Más vendidos</button>
-                <button onClick={() => { setActiveTab('buscar'); setSearchInitialQuery('anestesia'); }} className="hover:text-zinc-950 dark:hover:text-white cursor-pointer text-emerald-600 dark:text-emerald-500">Promociones</button>
-                <button onClick={() => setActiveTab('kits')} className={`hover:text-zinc-950 dark:hover:text-white cursor-pointer ${activeTab === 'kits' ? 'text-blue-500 font-bold' : ''}`}>Kits Inteligentes</button>
-                <button onClick={() => setActiveTab('asistente')} className={`hover:text-zinc-950 dark:hover:text-white cursor-pointer flex items-center gap-0.5 ${activeTab === 'asistente' ? 'text-blue-500 font-bold' : ''}`}><Sparkles size={11} className="text-blue-500" /> Ayúdame a comprar</button>
-                <button onClick={() => setActiveTab('recompensas')} className={`hover:text-zinc-950 dark:hover:text-white cursor-pointer flex items-center gap-0.5 text-amber-600 dark:text-amber-500 ${activeTab === 'recompensas' ? 'font-bold' : ''}`}><Star size={11} className="fill-amber-500 stroke-amber-500" /> OneRewards</button>
+              <div className="flex gap-5 overflow-x-auto py-1 scrollbar-none">
+                <button 
+                  onClick={() => { setActiveTab('buscar'); setSearchInitialQuery(''); }} 
+                  className={`hover:text-slate-950 dark:hover:text-white cursor-pointer shrink-0 transition-colors ${activeTab === 'buscar' && !searchInitialQuery ? 'text-blue-600 font-bold' : ''}`}
+                >
+                  Todos los productos
+                </button>
+                <button 
+                  onClick={() => { setActiveTab('buscar'); setSearchInitialQuery('Filtek'); }} 
+                  className="hover:text-slate-950 dark:hover:text-white cursor-pointer shrink-0 transition-colors"
+                >
+                  Más vendidos
+                </button>
+                <button 
+                  onClick={() => { setActiveTab('buscar'); setSearchInitialQuery('anestesia'); }} 
+                  className="hover:text-slate-950 dark:hover:text-white cursor-pointer shrink-0 text-emerald-600 dark:text-emerald-500 transition-colors"
+                >
+                  Promociones
+                </button>
+                <button 
+                  onClick={() => setActiveTab('kits')} 
+                  className={`hover:text-slate-950 dark:hover:text-white cursor-pointer shrink-0 transition-colors ${activeTab === 'kits' ? 'text-blue-600 font-bold' : ''}`}
+                >
+                  Kits
+                </button>
+                <button 
+                  onClick={() => setActiveTab('asistente')} 
+                  className={`hover:text-slate-950 dark:hover:text-white cursor-pointer shrink-0 flex items-center gap-0.5 transition-colors ${activeTab === 'asistente' ? 'text-blue-600 font-bold' : ''}`}
+                >
+                  <Sparkles size={12} className="text-blue-500" /> Ayúdame a comprar
+                </button>
+                <button 
+                  onClick={() => { setActiveTab('buscar'); setSearchInitialQuery('cotizacion'); }}
+                  className="hover:text-slate-950 dark:hover:text-white cursor-pointer shrink-0 transition-colors"
+                >
+                  Subir cotización
+                </button>
+                <button 
+                  onClick={() => { setRole('proveedor'); setSupplierId('s1'); setActiveTab('proveedorPanel'); }}
+                  className="hover:text-slate-950 dark:hover:text-white cursor-pointer shrink-0 transition-colors"
+                >
+                  Para proveedores
+                </button>
               </div>
 
             </div>
@@ -591,8 +654,7 @@ const AppContent: React.FC = () => {
                               <td className="py-3 px-3 text-right">
                                 <button
                                   onClick={() => {
-                                    const { addToCart: add } = useCart();
-                                    add(selectedProduct, l, 1);
+                                    addToCart(selectedProduct, l, 1);
                                     setSelectedProduct(null);
                                   }}
                                   disabled={l.stock === 0}

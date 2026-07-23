@@ -80,7 +80,7 @@ export const Kits: React.FC<Props> = ({ onSelectProduct, onNavigate }) => {
             <div className="p-5 bg-zinc-50/50 dark:bg-zinc-900/20 border-t border-zinc-100 dark:border-zinc-900">
               <button
                 onClick={() => handleSelectKit(kit)}
-                className="w-full bg-zinc-950 hover:bg-zinc-800 dark:bg-zinc-50 dark:hover:bg-zinc-200 text-white dark:text-zinc-950 text-xs font-semibold py-2 rounded-lg transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2 rounded-lg transition-colors flex items-center justify-center gap-1 cursor-pointer shadow-sm"
               >
                 Configurar Kit
                 <ChevronRight size={13} />
@@ -129,7 +129,7 @@ export const Kits: React.FC<Props> = ({ onSelectProduct, onNavigate }) => {
                       onClick={() => setActiveType(type)}
                       className={`py-3 px-4 rounded-xl border text-center transition-all cursor-pointer ${
                         isActive 
-                          ? `${details.active} border-zinc-950 dark:border-white font-bold` 
+                          ? `${details.active} border-blue-600 dark:border-blue-400 font-bold shadow-sm` 
                           : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50/20 text-zinc-500 hover:bg-zinc-50'
                       }`}
                     >
