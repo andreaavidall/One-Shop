@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { generateProposalsForItems, type Proposal, type Product, type ProductListing, type Supplier } from '../data/mockData';
+import { generateProposalsForItems, type Proposal, type Product, type ProductListing, type Supplier, products, listings, suppliers } from '../data/mockData';
 import { useCart } from '../context/CartContext';
-import { Sparkles, Send, Bot, User, ShoppingCart, Check, Info, Award, ShieldAlert, ArrowRight } from 'lucide-react';
+import { Sparkles, Send, Bot, User, ShoppingCart, Check, Info, Award, ShieldAlert, ArrowRight, RefreshCw, X, Star } from 'lucide-react';
 
 interface Props {
   onSelectProduct: (product: Product) => void;
@@ -26,6 +26,12 @@ export const AIAssistant: React.FC<Props> = ({ onSelectProduct, onNavigate }) =>
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const { loadProposal } = useCart();
+
+  // Substitution state
+  const [showSwapModal, setShowSwapModal] = useState(false);
+  const [swapTargetMsgId, setSwapTargetMsgId] = useState<string | null>(null);
+  const [swapTargetType, setSwapTargetType] = useState<'economy' | 'value' | 'premium' | null>(null);
+  const [swapItemIdx, setSwapItemIdx] = useState<number | null>(null);
 
   const handleSend = (text: string) => {
     if (!text.trim()) return;
@@ -91,8 +97,101 @@ export const AIAssistant: React.FC<Props> = ({ onSelectProduct, onNavigate }) =>
     onNavigate('carrito');
   };
 
+  // Open Swap Item Dialog
+  const handleOpenSwap = (msgId: string, type: 'economy' | 'value' | 'premium', itemIdx: number) => {
+    setSwapTargetMsgId(msgId);
+    setSwapTargetType(type);
+    setSwapItemIdx(itemIdx);
+    setShowSwapModal(true);
+  };
+
+  // Perform item substitution within the message's proposal state
+  const handleReplaceItem = (newProduct: Product, newListing: ProductListing) => {
+    if (!swapTargetMsgId || !swapTargetType || swapItemIdx === null) return;
+
+    const newSupplier = suppliers.find(s => s.id === newListing.supplierId)!;
+
+    setMessages(prevMessages => 
+      prevMessages.map(msg => {
+        if (msg.id !== swapTargetMsgId || !msg.proposals) return msg;
+
+        const currentProposals = msg.proposals;
+        const currentProp = currentProposals[swapTargetType];
+        
+        // Build updated items list
+        const updatedItems = [...currentProp.items];
+        
+        // Keep track of old item price to recalculate cost differences
+        const oldCost = updatedItems[swapItemIdx].listing.price;
+        const newCost = newListing.price;
+
+        updatedItems[swapItemIdx] = {
+          product: newProduct,
+          listing: newListing,
+          supplier: newSupplier,
+          reason: 'Sustituido por el odontólogo'
+        };
+
+        const updatedProp: Proposal = {
+          ...currentProp,
+          items: updatedItems,
+          totalCost: currentProp.totalCost - oldCost + newCost
+        };
+
+        return {
+          ...msg,
+          proposals: {
+            ...currentProposals,
+            [swapTargetType]: updatedProp
+          }
+        };
+      })
+    );
+
+    setShowSwapModal(false);
+    setSwapTargetMsgId(null);
+    setSwapTargetType(null);
+    setSwapItemIdx(null);
+  };
+
+  // Get options for swapping: other products in same category or alternative brand listings
+  const getSwapOptions = () => {
+    if (!swapTargetMsgId || !swapTargetType || swapItemIdx === null) return [];
+    const targetMsg = messages.find(m => m.id === swapTargetMsgId);
+    if (!targetMsg || !targetMsg.proposals) return [];
+    
+    const activeItem = targetMsg.proposals[swapTargetType].items[swapItemIdx];
+    const category = activeItem.product.category;
+
+    // Find all listings of products in the same category that are NOT the active item
+    const options: { product: Product; listing: ProductListing; supplier: Supplier }[] = [];
+
+    products
+      .filter(p => p.category === category)
+      .forEach(prod => {
+        listings
+          .filter(l => l.productId === prod.id && l.stock > 0 && l.id !== activeItem.listing.id)
+          .forEach(list => {
+            const sup = suppliers.find(s => s.id === list.supplierId)!;
+            options.push({ product: prod, listing: list, supplier: sup });
+          });
+      });
+
+    return options;
+  };
+
+  const swapOptionsList = getSwapOptions();
+  
+  // Find current swap target item name for display
+  const getSwapTargetItemName = () => {
+    if (!swapTargetMsgId || !swapTargetType || swapItemIdx === null) return '';
+    const targetMsg = messages.find(m => m.id === swapTargetMsgId);
+    return targetMsg?.proposals?.[swapTargetType]?.items[swapItemIdx]?.product.name || '';
+  };
+
   return (
-    <div className="h-[calc(100vh-140px)] flex flex-col justify-between bg-white dark:bg-[#0c0c0f] border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm">
+    <div className="h-[calc(100vh-140px)] flex flex-col justify-between bg-white dark:bg-[#0c0c0f] border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm relative">
+      
       {/* Assistant Header */}
       <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-900 bg-zinc-50/50 dark:bg-zinc-900/10 flex justify-between items-center shrink-0">
         <div className="flex items-center gap-2.5">
@@ -134,7 +233,7 @@ export const AIAssistant: React.FC<Props> = ({ onSelectProduct, onNavigate }) =>
 
               {/* RENDER PROPOSALS IF ATTACHED */}
               {msg.proposals && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
                   {(['economy', 'value', 'premium'] as const).map((type) => {
                     const prop = msg.proposals![type];
                     const details = {
@@ -165,9 +264,17 @@ export const AIAssistant: React.FC<Props> = ({ onSelectProduct, onNavigate }) =>
                         <div className="p-4 flex-1 space-y-3">
                           {prop.items.map((item, idx) => (
                             <div key={idx} className="flex justify-between items-start text-[10px] border-b border-zinc-50 dark:border-zinc-900/50 pb-2 last:border-b-0 last:pb-0">
-                              <div className="pr-2">
+                              <div className="pr-2 overflow-hidden">
                                 <h5 className="font-bold text-zinc-900 dark:text-zinc-100 truncate max-w-[120px]">{item.product.name}</h5>
-                                <span className="text-zinc-400">{item.supplier.name}</span>
+                                <span className="text-zinc-400 block truncate">{item.supplier.name}</span>
+                                
+                                {/* Substitución link */}
+                                <button
+                                  onClick={() => handleOpenSwap(msg.id, type, idx)}
+                                  className="text-[9px] text-blue-500 hover:underline flex items-center gap-0.5 font-bold mt-1 cursor-pointer"
+                                >
+                                  <RefreshCw size={8} /> Sustituir
+                                </button>
                               </div>
                               <span className="font-mono font-semibold text-zinc-900 dark:text-white shrink-0">
                                 S/. {item.listing.price.toFixed(2)}
@@ -222,7 +329,7 @@ export const AIAssistant: React.FC<Props> = ({ onSelectProduct, onNavigate }) =>
             <button
               key={idx}
               onClick={() => handleSend(tag)}
-              className="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-800 text-[10px] text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+              className="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-800 text-[10px] text-zinc-650 dark:text-zinc-350 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
             >
               {tag}
             </button>
@@ -247,6 +354,57 @@ export const AIAssistant: React.FC<Props> = ({ onSelectProduct, onNavigate }) =>
           </button>
         </div>
       </div>
+
+      {/* SWAP ALTERNATIVE ITEM MODAL */}
+      {showSwapModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/50 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-[#0c0c0f] border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+            <div className="px-6 py-4 bg-zinc-50 dark:bg-zinc-950 border-b border-zinc-100 dark:border-zinc-900 flex justify-between items-center">
+              <div>
+                <h3 className="text-xs font-bold text-zinc-900 dark:text-white uppercase tracking-wider">Sustituir Producto de Propuesta</h3>
+                <p className="text-[10px] text-zinc-400 mt-0.5">Sustituto de: "{getSwapTargetItemName()}"</p>
+              </div>
+              <button 
+                onClick={() => setShowSwapModal(false)}
+                className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 text-xs font-bold cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto max-h-[50vh] space-y-3 text-xs">
+              {swapOptionsList.length > 0 ? (
+                swapOptionsList.map((opt, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => handleReplaceItem(opt.product, opt.listing)}
+                    className="p-3 border border-zinc-150 dark:border-zinc-850 hover:border-blue-500/35 rounded-xl flex justify-between items-center gap-3 cursor-pointer hover:bg-zinc-50/50 transition-all"
+                  >
+                    <div className="overflow-hidden">
+                      <h4 className="font-bold text-zinc-800 dark:text-zinc-200 truncate">{opt.product.name}</h4>
+                      <p className="text-[10px] text-zinc-450 truncate">Marca: {opt.product.brand} • Prov: {opt.supplier.name}</p>
+                    </div>
+                    <span className="font-mono font-bold text-zinc-950 dark:text-white shrink-0">
+                      S/. {opt.listing.price.toFixed(2)}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-center py-6 text-zinc-400">No hay productos alternativos en stock para esta categoría.</p>
+              )}
+            </div>
+
+            <div className="px-6 py-4 bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-100 dark:border-zinc-900 flex justify-end">
+              <button
+                onClick={() => setShowSwapModal(false)}
+                className="px-4 py-2 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-lg text-xs font-semibold hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors cursor-pointer"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
